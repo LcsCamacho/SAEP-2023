@@ -5,6 +5,7 @@ export const useAxios = () => {
     baseURL: "http://localhost:3777",
     headers: {
       "Content-Type": "application/json",
+      Authorization: "Bearer " + 123456,
     },
   });
 

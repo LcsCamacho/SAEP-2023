@@ -1,10 +1,14 @@
-import { create, update, remove, read } from "../../controller/example";
 import { Router } from "express";
-import { auth } from "../../middleware/auth";
+import { router as alocacaoRouter } from "./alocacao.route";
+import { router as automoveisRouter } from "./automoveis.route";
+import { router as clientesRouter } from "./clientes.route";
+import { router as concessionariasRouter } from "./concessionarias.route";
+import { router as vendasRouter } from "./vendas.route";
 
 export const routerPrivate = Router();
 
-router.get("/", auth, read);
-router.post("/", auth, create);
-router.put("/", auth, update);
-router.delete("/", auth, remove);
+routerPrivate.use(alocacaoRouter);
+routerPrivate.use(automoveisRouter);
+routerPrivate.use(clientesRouter);
+routerPrivate.use(concessionariasRouter);
+routerPrivate.use(vendasRouter);
