@@ -159,7 +159,7 @@ export default function Home({ locacoes }: HomeProps) {
                   <div className="flex flex-col w-full gap-3 py-3">
                     <Combobox
                       placeholder="Clientes..."
-                      value={clientesSelected?.nome}
+                      value={clientesSelected?.nome || ""}
                       onChange={(value) => {
                         setClientesSelected(
                           clientes.find((c) => String(c.id) === value)
@@ -179,7 +179,7 @@ export default function Home({ locacoes }: HomeProps) {
                     </Combobox>
                     <Combobox
                       placeholder="Concessionarias..."
-                      value={concessionariaSelected?.concessionaria}
+                      value={concessionariaSelected?.concessionaria || ""}
                       onChange={(value) => {
                         setConcessionariaSelected(
                           concessionarias.find(
