@@ -22,10 +22,9 @@ export const getServerSideProps: GetServerSideProps = async () => {
       },
     }
   );
-  const locacoes = res.data;
   return {
     props: {
-      locacoes,
+      locacoes: res.data,
     },
   };
 };
@@ -87,9 +86,7 @@ export default function Home({ locacoes }: HomeProps) {
 
   useEffect(() => {
     (async () => {
-      const responseConsessionarias = await api.get("/concessionarias");
-      setConcessionarias(responseConsessionarias.data);
-      console.log(responseConsessionarias.data);
+      setConcessionarias((await api.get("/concessionarias")).data);
       setClientes((await api.get("/clientes")).data);
     })();
   }, []);
