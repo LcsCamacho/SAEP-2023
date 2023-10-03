@@ -13,7 +13,15 @@ import { useAxios } from "@/hooks/useAxios";
 import { Clientes, Concessionarias } from "@prisma/client";
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const res = await axios.get<LocacaoProps[]>("http://localhost:3777/alocacao");
+  const res = await axios.get<LocacaoProps[]>(
+    "http://localhost:3777/alocacao",
+    {
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `Bearer 123456`,
+      },
+    }
+  );
   const locacoes = res.data;
   return {
     props: {
@@ -79,7 +87,9 @@ export default function Home({ locacoes }: HomeProps) {
 
   useEffect(() => {
     (async () => {
-      setConcessionarias((await api.get("/concessionarias")).data);
+      const responseConsessionarias = await api.get("/concessionarias");
+      setConcessionarias(responseConsessionarias.data);
+      console.log(responseConsessionarias.data);
       setClientes((await api.get("/clientes")).data);
     })();
   }, []);
