@@ -1,16 +1,14 @@
-import Image from "next/image";
-import { Inter } from "next/font/google";
-import { GetServerSideProps } from "next";
-const inter = Inter({ subsets: ["latin"] });
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { LocacaoProps, AutomovelProps, ConcessionariaProps } from "./types";
-import Head from "next/head";
-import { Button, Combobox, Modal } from "nextjs-components";
-import { ChevronLeft, ChevronDown } from "nextjs-components/src/icons";
-import { AutomovelItem } from "../components/automoveis";
-import { useAxios } from "@/hooks/useAxios";
 import { Clientes, Concessionarias } from "@prisma/client";
+import axios from "axios";
+import { GetServerSideProps } from "next";
+import { Inter } from "next/font/google";
+import Head from "next/head";
+import { Combobox, Modal } from "nextjs-components";
+import { useCallback, useEffect, useState } from "react";
+import { AutomovelItem } from "../components/automoveis";
+import { LocacaoProps } from "./types";
+import { useServices } from "../hooks/useServices";
+const inter = Inter({ subsets: ["latin"] });
 
 export const getServerSideProps: GetServerSideProps = async () => {
   const res = await axios.get<LocacaoProps[]>(
@@ -52,14 +50,10 @@ export default function Home({ locacoes }: HomeProps) {
     {} as LocacaoProps
   );
 
-  const { api } = useAxios();
+  const { getClientes, getConcessionarias, getLocacao, efetuarVenda } =
+    useServices();
 
-  const fetchLocacao = async () => {
-    const res = await api.get<LocacaoProps[]>("/alocacao");
-    return res.data;
-  };
-
-  useEffect(() => {
+  const verificarAreasOcupadas = useCallback(async () => {
     arrAte11.forEach((n) => {
       locacoes.forEach((loc) => {
         if (loc.area === String(n)) {
@@ -80,16 +74,9 @@ export default function Home({ locacoes }: HomeProps) {
       return Number(a);
     });
     setIsOpen((st) => !st);
-    const data = await fetchLocacao();
+    const data = await getLocacao();
     setLocacao(() => data.filter((loc) => loc.area === a));
   };
-
-  useEffect(() => {
-    (async () => {
-      setConcessionarias((await api.get("/concessionarias")).data);
-      setClientes((await api.get("/clientes")).data);
-    })();
-  }, []);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -97,21 +84,33 @@ export default function Home({ locacoes }: HomeProps) {
   };
 
   const handleClickVender = async (loc: LocacaoProps) => {
-    const res = await api.post("/alocacao", {
+    const data = {
       quantidade: loc.quantidade,
-      id: loc.id,
-    });
-    const res2 = await api.post("vendas", {
+      locacaoId: loc.id,
       clienteId: clientesSelected?.id,
-      alocacaoId: locSelected.id,
-    });
-    console.log(res);
-    console.log(res2);
-    res.status === 200 && (await fetchLocacao());
-    handleClose();
-    setLocSelected({} as LocacaoProps);
-    setClientesSelected(undefined);
+    };
+    try {
+      await efetuarVenda(data);
+      await getLocacao();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      handleClose();
+      setLocSelected({} as LocacaoProps);
+      setClientesSelected(undefined);
+    }
   };
+
+  useEffect(() => {
+    verificarAreasOcupadas();
+  }, [verificarAreasOcupadas]);
+
+  useEffect(() => {
+    (async () => {
+      setConcessionarias(await getConcessionarias());
+      setClientes(await getClientes());
+    })();
+  }, []);
 
   return (
     <>
