@@ -1,7 +1,5 @@
-import { ChevronDown, ChevronLeft } from "nextjs-components/src/icons";
 import { Button } from "nextjs-components";
-import { useState } from "react";
-import { AutomovelProps, LocacaoProps } from "../pages/types";
+import { LocacaoProps } from "../pages/types";
 
 const AutomovelItem = ({
   loc,
@@ -25,9 +23,7 @@ const AutomovelItem = ({
   };
   return (
     <div
-      className={`
-  flex items-center flex-col gap-2  p-3 border cursor-pointer 
- hover:text-black  hover:bg-zinc-100 transition-all`}
+      className={`flex items-center flex-col gap-2 p-3 border cursor-pointer hover:text-black  hover:bg-zinc-100 transition-all`}
     >
       <div className="flex justify-between w-full gap-1">
         <div className="flex  w-max">{loc.automovel.modelo}</div>

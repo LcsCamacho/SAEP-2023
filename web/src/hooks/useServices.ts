@@ -35,5 +35,14 @@ export const useServices = () => {
     return { responseLocacao, responseVenda };
   };
 
-  return { getLocacao, getConcessionarias, getClientes, efetuarVenda };
+  const getConcessionariasByVeiculo = async (id: number) =>
+    (await api.get(`/concessionarias/veiculo/${id}`)).data;
+
+  return {
+    getLocacao,
+    getConcessionarias,
+    getClientes,
+    efetuarVenda,
+    getConcessionariasByVeiculo,
+  };
 };

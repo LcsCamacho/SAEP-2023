@@ -1,4 +1,7 @@
-import { Clientes, Concessionarias } from "@prisma/client";
+import {
+  Clientes,
+  Concessionarias,
+} from "../../../api/node_modules/.prisma/client";
 import axios from "axios";
 import { GetServerSideProps } from "next";
 import { Inter } from "next/font/google";
@@ -8,6 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AutomovelItem } from "../components/automoveis";
 import { LocacaoProps } from "./types";
 import { useServices } from "../hooks/useServices";
+import { SkeletonAreas } from "@/components/skeleton";
 const inter = Inter({ subsets: ["latin"] });
 
 export const getServerSideProps: GetServerSideProps = async () => {
@@ -49,11 +53,32 @@ export default function Home({ locacoes }: HomeProps) {
   const [locSelected, setLocSelected] = useState<LocacaoProps>(
     {} as LocacaoProps
   );
+  const [concessionariasByVeiculo, setConcessionariasByVeiculo] = useState<
+    Concessionarias[]
+  >([]);
+  const [loading, setLoading] = useState(true);
 
-  const { getClientes, getConcessionarias, getLocacao, efetuarVenda } =
-    useServices();
+  const {
+    getClientes,
+    getConcessionarias,
+    getLocacao,
+    efetuarVenda,
+    getConcessionariasByVeiculo,
+  } = useServices();
+
+  useEffect(() => {
+    if (!locSelected.automovelId) return;
+    (async () => {
+      const concessionariasPorVeiculo = await getConcessionariasByVeiculo(
+        locSelected.automovelId
+      );
+      setConcessionariasByVeiculo(concessionariasPorVeiculo);
+      setConcessionariaSelected(concessionariasPorVeiculo[0]);
+    })();
+  }, [locSelected]);
 
   const verificarAreasOcupadas = useCallback(async () => {
+    if (loading) return;
     arrAte11.forEach((n) => {
       locacoes.forEach((loc) => {
         if (loc.area === String(n)) {
@@ -65,7 +90,7 @@ export default function Home({ locacoes }: HomeProps) {
         }
       });
     });
-  }, [locacoes]);
+  }, [locacoes, loading]);
 
   const handleClickArea = async (e: React.SyntheticEvent<HTMLDivElement>) => {
     const a = e.currentTarget.innerHTML;
@@ -84,6 +109,7 @@ export default function Home({ locacoes }: HomeProps) {
   };
 
   const handleClickVender = async (loc: LocacaoProps) => {
+    setLoading(true);
     const data = {
       quantidade: loc.quantidade,
       locacaoId: loc.id,
@@ -95,9 +121,10 @@ export default function Home({ locacoes }: HomeProps) {
     } catch (error) {
       console.log(error);
     } finally {
-      handleClose();
       setLocSelected({} as LocacaoProps);
       setClientesSelected(undefined);
+      setLoading(false);
+      handleClose();
     }
   };
 
@@ -107,8 +134,12 @@ export default function Home({ locacoes }: HomeProps) {
 
   useEffect(() => {
     (async () => {
+      setLoading(true);
       setConcessionarias(await getConcessionarias());
       setClientes(await getClientes());
+      setTimeout(() => {
+        setLoading(false);
+      }, 2000);
     })();
   }, []);
 
@@ -158,6 +189,8 @@ export default function Home({ locacoes }: HomeProps) {
                 {showVendasStep && (
                   <div className="flex flex-col w-full gap-3 py-3">
                     <Combobox
+                      showMenuButton
+                      size="large"
                       placeholder="Clientes..."
                       value={clientesSelected?.nome || ""}
                       onChange={(value) => {
@@ -166,7 +199,7 @@ export default function Home({ locacoes }: HomeProps) {
                         );
                       }}
                     >
-                      <Combobox.Input />
+                      <Combobox.Input loading={loading} />
                       <Combobox.List>
                         {clientes.map((c) => {
                           return (
@@ -178,6 +211,8 @@ export default function Home({ locacoes }: HomeProps) {
                       </Combobox.List>
                     </Combobox>
                     <Combobox
+                      showMenuButton
+                      size="large"
                       placeholder="Concessionarias..."
                       value={concessionariaSelected?.concessionaria || ""}
                       onChange={(value) => {
@@ -188,9 +223,9 @@ export default function Home({ locacoes }: HomeProps) {
                         );
                       }}
                     >
-                      <Combobox.Input />
+                      <Combobox.Input loading={loading} />
                       <Combobox.List>
-                        {concessionarias.map((c) => {
+                        {concessionariasByVeiculo.map((c) => {
                           return (
                             <Combobox.Option key={c.id} value={String(c.id)}>
                               {c.concessionaria}
@@ -217,95 +252,77 @@ export default function Home({ locacoes }: HomeProps) {
             )}
           </Modal.Actions>
         </Modal.Modal>
-
-        <div
-          onClick={handleClickArea}
-          className={`
-          area1 area  z-30 flex items-center justify-center border cursor-pointer absolute bottom-[25vh] left-14 w-[20vw] h-[25vh] bg-slate-50
-           hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
-        >
-          1
-        </div>
-        <div
-          onClick={handleClickArea}
-          className={`
-          area2 area z-30 flex items-center justify-center border cursor-pointer absolute bottom-[26vh] left-[34vw] w-[5vw] h-[15vh] bg-slate-50
-           hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
-        >
-          2
-        </div>
-        <div
-          onClick={handleClickArea}
-          className={`
-          area3 area z-20 flex items-center justify-center border cursor-pointer absolute bottom-[10vh] left-[15vw] w-[25vw] h-[33vh] bg-slate-50
-           hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
-        >
-          3
-        </div>
-        <div
-          onClick={handleClickArea}
-          className={`
-          area4 area z-50 flex items-center justify-center border cursor-pointer absolute bottom-[40vh] left-[20vw] w-[12vw] h-[14vh] bg-slate-50
-           hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
-        >
-          4
-        </div>
-        <div
-          onClick={handleClickArea}
-          className={`
-          area5 area z-10 flex items-center justify-end border cursor-pointer absolute bottom-[10vh] left-[15vw] w-[45vw] h-[40vh] bg-slate-50
-           hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
-        >
-          <span className="mr-32">5</span>
-        </div>
-        <div
-          onClick={handleClickArea}
-          className={`
-          area6 area z-10 flex items-center justify-center border cursor-pointer absolute top-[5vh] right-[5vw] w-[8vw] h-[5vh] bg-slate-50
-           hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
-        >
-          6
-        </div>
-        <div
-          onClick={handleClickArea}
-          className={`
-          area7 area z-50 flex items-center justify-center border cursor-pointer absolute bottom-[50vh] left-[32vw] w-[10vw] h-[8vh] bg-slate-50
-           hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
-        >
-          7
-        </div>
-        <div
-          onClick={handleClickArea}
-          className={`
-          area8 area z-50 flex items-center justify-center border cursor-pointer absolute top-[20vh] left-[20vw] w-[9vw] h-[9vh] bg-slate-50
-           hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
-        >
-          8
-        </div>
-        <div
-          onClick={handleClickArea}
-          className={`
-          area9 area z-50 flex items-center justify-center border cursor-pointer absolute top-[19vh] left-[29vw] w-[12vw] h-[12vh] bg-slate-50
-           hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
-        >
-          9
-        </div>
-        <div
-          onClick={handleClickArea}
-          className={`
-          area10 area z-00 flex items-center justify-center border cursor-pointer absolute top-[5vh] right-[5vw] w-[40vw] h-[80vh] bg-slate-50
-           hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
-        >
-          10
-        </div>
-        <div
-          onClick={handleClickArea}
-          className={`
-          area11 area z-50 flex items-center justify-center border cursor-pointer absolute top-[5vh] left-[27vw] w-[5vw] h-[12vh] bg-slate-50
-           hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
-        >
-          11
-        </div>
+        {loading && <SkeletonAreas />}
+        {!loading && (
+          <>
+            <div
+              onClick={handleClickArea}
+              className={`area1 area z-30 flex items-center justify-center border cursor-pointer absolute bottom-[25vh] left-14 w-[20vw] h-[25vh] bg-slate-50 hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
+            >
+              1
+            </div>
+            <div
+              onClick={handleClickArea}
+              className={`area2 area z-30 flex items-center justify-center border cursor-pointer absolute bottom-[26vh] left-[34vw] w-[5vw] h-[15vh] bg-slate-50 hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
+            >
+              2
+            </div>
+            <div
+              onClick={handleClickArea}
+              className={`area3 area z-20 flex items-center justify-center border cursor-pointer absolute bottom-[10vh] left-[15vw] w-[25vw] h-[33vh] bg-slate-50 hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
+            >
+              3
+            </div>
+            <div
+              onClick={handleClickArea}
+              className={`area4 area z-50 flex items-center justify-center border cursor-pointer absolute bottom-[40vh] left-[20vw] w-[12vw] h-[14vh] bg-slate-50 hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
+            >
+              4
+            </div>
+            <div
+              onClick={handleClickArea}
+              className={`area5 area z-10 flex items-center justify-end border cursor-pointer absolute bottom-[10vh] left-[15vw] w-[45vw] h-[40vh] bg-slate-50 hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
+            >
+              <span className="mr-32">5</span>
+            </div>
+            <div
+              onClick={handleClickArea}
+              className={`area6 area z-10 flex items-center justify-center border cursor-pointer absolute top-[5vh] right-[5vw] w-[8vw] h-[5vh] bg-slate-50 hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
+            >
+              6
+            </div>
+            <div
+              onClick={handleClickArea}
+              className={`area7 area z-50 flex items-center justify-center border cursor-pointer absolute bottom-[50vh] left-[32vw] w-[10vw] h-[8vh] bg-slate-50 hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
+            >
+              7
+            </div>
+            <div
+              onClick={handleClickArea}
+              className={`area8 area z-50 flex items-center justify-center border cursor-pointer absolute top-[20vh] left-[20vw] w-[9vw] h-[9vh] bg-slate-50 hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
+            >
+              8
+            </div>
+            <div
+              onClick={handleClickArea}
+              className={`area9 area z-50 flex items-center justify-center border cursor-pointer absolute top-[19vh] left-[29vw] w-[12vw] h-[12vh] bg-slate-50 hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
+            >
+              9
+            </div>
+            <div
+              onClick={handleClickArea}
+              className={`area10 area z-00 flex items-center justify-center border cursor-pointer absolute top-[5vh] right-[5vw] w-[40vw] h-[80vh] bg-slate-50 hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
+            >
+              10
+            </div>
+            <div
+              onClick={handleClickArea}
+              className={`area11 area z-50 flex items-center justify-center border cursor-pointer absolute top-[5vh] left-[27vw] w-[5vw] h-[12vh] bg-slate-50 hover:text-black hover:border-violet-500 hover:bg-zinc-100 transition-all`}
+            >
+              11
+            </div>
+          </>
+        )}
       </main>
     </>
   );
